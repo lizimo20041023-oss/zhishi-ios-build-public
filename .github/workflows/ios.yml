@@ -1,0 +1,31 @@
+name: Build Zhishi IPA
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Check out source archive
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Extract iOS source
+        run: unzip -q Zhishi-iOS-CloudBuild.zip -d app
+      - name: Validate source and resources
+        working-directory: app
+        run: python3 scripts/validate_project.py
+      - name: Compile iPhone app and package unsigned IPA
+        working-directory: app
+        run: bash scripts/build-unsigned.sh
+      - name: Upload IPA for download
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: Zhishi-unsigned-IPA
+          path: |
+            app/dist/Zhishi-unsigned.ipa
+            app/dist/SHA256SUMS.txt
+          retention-days: 7
+          if-no-files-found: error
